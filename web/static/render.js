@@ -8,6 +8,10 @@ export function render(game) {
 
   hide('#board');
   hide('#promotion');
+  hide('#reset');
+  hide('#p1-win');
+  hide('#p2-win');
+
   if (game.phase !== enums.game.Phase.WAITING) {
     show('#board');
 
@@ -17,6 +21,11 @@ export function render(game) {
       show('#promotion');
       renderPromotion(game);
     }
+  }
+
+  if (game.phase === enums.game.Phase.DONE) {
+    show('#reset');
+    renderDone(game);
   }
 }
 
@@ -40,14 +49,17 @@ function hide(selectorOrEl) {
   }
 }
 
+function prefix(player) {
+  return player === enums.chess.Player.P1 ? 'p1' : 'p2';
+}
+
 function renderPlayer(game, player) {
   const isMyTurn = game.state.turn === player;
   const name = game.players[player];
-  const prefix = player === enums.chess.Player.P1 ? 'p1' : 'p2';
 
-  const $name = $(`#${prefix}-name`);
-  const $turn = $(`#${prefix}-turn`)
-  const $register = $(`#${prefix}-register`)
+  const $name = $(`#${prefix(player)}-name`);
+  const $turn = $(`#${prefix(player)}-turn`)
+  const $register = $(`#${prefix(player)}-register`)
   const $unregister = $('#unregister')
 
   hide($name);
@@ -122,8 +134,15 @@ function renderPiece(piece) {
 function renderPromotion(game) {
   const player = game.state.turn;
   const name = game.players[player];
-  const className = player === enums.chess.Player.P1 ? "p1" : "p2"
   hide('#promotion > button');
-  show(`#promotion > button.${className}`);
+  show(`#promotion > button.${prefix(player)}`);
   $('#promotion .name').textContent = name;
+}
+
+function renderDone(game) {
+  const loser = game.state.turn;
+  const winner = -loser;
+  hide(`#${prefix(loser)}-turn`);
+  show(`#${prefix(winner)}-win`);
+  show('#reset');
 }

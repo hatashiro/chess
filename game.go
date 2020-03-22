@@ -107,11 +107,17 @@ func (game *Game) Move(session uint64, from Location, to Location) error {
 		return err
 	}
 
+	if game.Phase != ACTIVE {
+		return errors.New("The game is already finished")
+	}
+
 	if err := game.State.TryMove(from, to); err != nil {
 		return err
 	}
 
-	// TODO: Checkmate or win/lose
+	if game.State.IsCheckmated() {
+		game.Phase = DONE
+	}
 
 	return nil
 }
@@ -121,11 +127,13 @@ func (game *Game) Promote(session uint64, to PieceType) error {
 		return err
 	}
 
+	if game.Phase != ACTIVE {
+		return errors.New("The game is already finished")
+	}
+
 	if err := game.State.TryPromote(to); err != nil {
 		return err
 	}
-
-	// TODO: Checkmate or win/lose
 
 	return nil
 }

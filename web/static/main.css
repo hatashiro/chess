@@ -70,7 +70,9 @@ button {
 }
 
 #p1-turn,
-#p2-turn {
+#p2-turn,
+#p1-win,
+#p2-win {
   color: #c12b2b;
 }
 

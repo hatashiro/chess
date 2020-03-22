@@ -311,6 +311,10 @@ func (state *State) TryPromote(to PieceType) error {
 	return nil
 }
 
+func (state *State) IsCheckmated() bool {
+	return true
+}
+
 func (state *State) Json() interface{} {
 	return &struct {
 		Turn        Player      `json:"turn"`

@@ -25,6 +25,7 @@ func NewServer() *echo.Echo {
 	e.POST("/game/:id/unregister", unregisterPlayer)
 	e.POST("/game/:id/move", move)
 	e.POST("/game/:id/promote", promote)
+	e.POST("/game/:id/reset", reset)
 
 	return e
 }
@@ -135,6 +136,21 @@ func promote(c echo.Context) error {
 	}
 
 	if err := game.Promote(body.Session, body.To); err != nil {
+		return err
+	}
+
+	return c.String(200, "ok")
+}
+
+func reset(c echo.Context) error {
+	gameId := c.Param("id")
+
+	game, ok := games[gameId]
+	if !ok {
+		return errors.New("No game found.")
+	}
+
+	if err := game.Reset(); err != nil {
 		return err
 	}
 

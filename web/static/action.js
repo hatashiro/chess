@@ -90,3 +90,9 @@ async function promote(e) {
 }
 
 $('#promotion').addEventListener('click', promote);
+
+async function reset() {
+  await sendAction('reset');
+}
+
+$('#reset').addEventListener('click', reset);
