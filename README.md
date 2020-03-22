@@ -1,0 +1,5 @@
+# Chess
+
+## License
+
+[BSD](LICENSE)
