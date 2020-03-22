@@ -27,7 +27,8 @@ func (player Player) RankedLocation(rank int8, col int8) Location {
 const MAX_RANK = 8
 
 type Location struct {
-	Row, Col int8
+	Row int8 `json:"row"`
+	Col int8 `json:"col"`
 }
 
 func (loc Location) IsValid() bool {
@@ -56,6 +57,14 @@ func (loc Location) Abs() Location {
 		col = -loc.Col
 	}
 	return Location{row, col}
+}
+
+func (loc Location) Int8() int8 {
+	return loc.Row*MAX_RANK + loc.Col
+}
+
+func LocationFromInt8(i int8) Location {
+	return Location{i / MAX_RANK, i % MAX_RANK}
 }
 
 type Board map[Location]Piece
@@ -123,6 +132,14 @@ func (board Board) movableLocations(from Location) []Location {
 	return locations
 }
 
+func (board Board) Json() interface{} {
+	res := make(map[int8]Piece)
+	for loc, piece := range board {
+		res[loc.Int8()] = piece
+	}
+	return res
+}
+
 type PieceType uint8
 
 const (
@@ -136,26 +153,13 @@ const (
 )
 
 type Piece struct {
-	Owner Player
-	Type  PieceType
-	Moved bool
+	Owner Player    `json:"owner"`
+	Type  PieceType `json:"type"`
+	Moved bool      `json:"moved"`
 }
 
 func (piece *Piece) IsOwnedBy(player Player) bool {
 	return piece.Owner == player
-}
-
-func (piece *Piece) Symbol() string {
-	symbols := map[Player](map[PieceType]string){
-		P1: map[PieceType]string{
-			KING: "♚", QUEEN: "♛", ROOK: "♜", BISHOP: "♝", KNIGHT: "♞", PAWN: "♟",
-		},
-		P2: map[PieceType]string{
-			KING: "♔", QUEEN: "♕", ROOK: "♖", BISHOP: "♗", KNIGHT: "♘", PAWN: "♙",
-		},
-	}
-
-	return symbols[piece.Owner][piece.Type]
 }
 
 type State struct {
@@ -202,13 +206,13 @@ func (state *State) TryMove(from Location, to Location) error {
 
 	// Process castling.
 	if piece.Type == KING && to.RelativeTo(from).Abs().Col == 2 {
-    if to.RelativeTo(from).Col > 0 {
-      // Right
-      state.move(piece.Owner.RankedLocation(1, 7), to.Relative(0, -1))
-    } else {
-      // Left
-      state.move(piece.Owner.RankedLocation(1, 0), to.Relative(0, +1))
-    }
+		if to.RelativeTo(from).Col > 0 {
+			// Right
+			state.move(piece.Owner.RankedLocation(1, 7), to.Relative(0, -1))
+		} else {
+			// Left
+			state.move(piece.Owner.RankedLocation(1, 0), to.Relative(0, +1))
+		}
 	}
 
 	// Check promotion and flip turn only when there's no pawn waiting for it.
@@ -256,4 +260,18 @@ func (state *State) TryPromote(to PieceType) error {
 	state.flipTurn()
 
 	return nil
+}
+
+func (state *State) Json() interface{} {
+	return &struct {
+		Turn        Player      `json:"turn"`
+		Board       interface{} `json:"board"`
+		Promotion   *Location   `json:"promotion"`
+		LastUpdated int64       `json:"lastUpdated"`
+	}{
+		state.Turn,
+		state.Board.Json(),
+		state.Promotion,
+		state.LastUpdated,
+	}
 }

@@ -1,0 +1,60 @@
+body {
+  color: #444;
+}
+
+p {
+  font-size: 25px;
+}
+
+.content {
+  box-sizing: border-box;
+  padding: 10px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+input[type="text"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #444;
+  font-size: 25px;
+}
+
+button {
+  border: 1px solid #444;
+  font-size: 25px;
+}
+
+#board {
+  display: flex;
+  flex-direction: column;
+  color: black;
+  text-align: center;
+}
+
+#board > div {
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 0;
+}
+
+#board > div > div {
+  flex-grow: 1;
+  flex-basis: 0;
+}
+
+#board > div:nth-child(even) > div:nth-child(even),
+#board > div:nth-child(odd) > div:nth-child(odd) {
+  background-color: #fff7be;
+}
+
+#board > div:nth-child(even) > div:nth-child(odd),
+#board > div:nth-child(odd) > div:nth-child(even) {
+  background-color: #bd763a;
+}
+
+#info {
+  font-size: 20px;
+  color: #777;
+}

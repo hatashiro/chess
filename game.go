@@ -2,6 +2,16 @@ package chess
 
 import (
 	"errors"
+	"strings"
+)
+
+type Phase uint8
+
+const (
+	_ Phase = iota
+	WAITING
+	ACTIVE
+	DONE
 )
 
 type Game struct {
@@ -15,17 +25,10 @@ type Game struct {
 	State
 }
 
-type Phase uint8
-
-const (
-	WAITING Phase = iota
-	ACTIVE
-	DONE
-)
-
-func CreateGame(id string) Game {
-	return Game{
+func CreateGame(id string) *Game {
+	return &Game{
 		Id:       id,
+		Phase:    WAITING,
 		Sessions: make(map[uint64]Player),
 		Players:  make(map[Player]string),
 		State:    NewState(),
@@ -48,22 +51,24 @@ func (game *Game) Register(player Player, session uint64, name string) error {
 		return errors.New("The game is already started.")
 	}
 
-	_, ok := game.Players[player]
-	if ok {
+	if _, ok := game.Players[player]; ok {
 		return errors.New("The player is already registered.")
 	}
 
-	_, ok = game.Sessions[session]
-	if ok {
+	if _, ok := game.Sessions[session]; ok {
 		return errors.New("You are already registered.")
+	}
+
+	name = strings.TrimSpace(name)
+	if len(name) == 0 {
+		return errors.New("The name is empty.")
 	}
 
 	game.Sessions[session] = player
 	game.Players[player] = name
 
 	// Check the opponent. If both are ready, start the game.
-	_, ok = game.Players[-player]
-	if ok {
+	if _, ok := game.Players[-player]; ok {
 		game.Phase = ACTIVE
 	}
 
@@ -123,4 +128,18 @@ func (game *Game) Promote(session uint64, to PieceType) error {
 	// TODO: Checkmate or win/lose
 
 	return nil
+}
+
+func (game *Game) Json() interface{} {
+	return &struct {
+		Id      string `json:"id"`
+		Phase   `json:"phase"`
+		Players map[Player]string `json:"players"`
+		State   interface{}       `json:"state"`
+	}{
+		game.Id,
+		game.Phase,
+		game.Players,
+		game.State.Json(),
+	}
 }
