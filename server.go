@@ -23,6 +23,8 @@ func NewServer() *echo.Echo {
 
 	e.POST("/game/:id/register", registerPlayer)
 	e.POST("/game/:id/unregister", unregisterPlayer)
+	e.POST("/game/:id/move", move)
+	e.POST("/game/:id/promote", promote)
 
 	return e
 }
@@ -81,6 +83,58 @@ func unregisterPlayer(c echo.Context) error {
 	}
 
 	if err := game.Unregister(body.Session); err != nil {
+		return err
+	}
+
+	return c.String(200, "ok")
+}
+
+func move(c echo.Context) error {
+	gameId := c.Param("id")
+
+	game, ok := games[gameId]
+	if !ok {
+		return errors.New("No game found.")
+	}
+
+	body := new(struct {
+		Session  uint64 `json:"session"`
+		FromInt8 int8   `json:"from"`
+		ToInt8   int8   `json:"to"`
+	})
+
+	if err := c.Bind(body); err != nil {
+		return err
+	}
+
+	from := LocationFromInt8(body.FromInt8)
+	to := LocationFromInt8(body.ToInt8)
+
+	if err := game.Move(body.Session, from, to); err != nil {
+		return err
+	}
+
+	return c.String(200, "ok")
+}
+
+func promote(c echo.Context) error {
+	gameId := c.Param("id")
+
+	game, ok := games[gameId]
+	if !ok {
+		return errors.New("No game found.")
+	}
+
+	body := new(struct {
+		Session uint64    `json:"session"`
+		To      PieceType `json:"to"`
+	})
+
+	if err := c.Bind(body); err != nil {
+		return err
+	}
+
+	if err := game.Promote(body.Session, body.To); err != nil {
 		return err
 	}
 
