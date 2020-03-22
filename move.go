@@ -13,21 +13,62 @@ func filter(locations []Location, fn func(Location) bool) []Location {
 func MovableLocationsFromKing(board Board, from Location) []Location {
 	piece := board[from]
 
-	locations := []Location{
-		Location{from.Row - 1, from.Col - 1},
-		Location{from.Row - 1, from.Col},
-		Location{from.Row - 1, from.Col + 1},
-		Location{from.Row, from.Col - 1},
-		Location{from.Row, from.Col + 1},
-		Location{from.Row + 1, from.Col - 1},
-		Location{from.Row + 1, from.Col},
-		Location{from.Row + 1, from.Col + 1},
+	result := []Location{
+		from.Relative(-1, -1),
+		from.Relative(-1, 0),
+		from.Relative(-1, +1),
+		from.Relative(0, -1),
+		from.Relative(0, +1),
+		from.Relative(+1, -1),
+		from.Relative(+1, 0),
+		from.Relative(+1, +1),
 	}
 
-	return filter(locations, func(location Location) bool {
-		other, ok := board[location]
-		return !ok || other.IsOwnedBy(piece.Owner)
+	result = filter(result, func(loc Location) bool {
+		if !loc.IsValid() {
+			return false
+		}
+		other, ok := board[loc]
+		return !ok || !other.IsOwnedBy(piece.Owner)
 	})
+
+	// Castling
+	if !piece.Moved {
+		// Left
+		rook, ok := board[piece.Owner.RankedLocation(1, 0)]
+		if ok && !rook.Moved && rook.IsOwnedBy(piece.Owner) {
+			possible := true
+			var col int8
+			for col = 1; col < from.Col; col++ {
+				if _, ok := board[piece.Owner.RankedLocation(1, col)]; ok {
+					possible = false
+					break
+				}
+			}
+
+			if possible {
+				result = append(result, from.Relative(0, -2))
+			}
+		}
+		// Right
+		rook, ok = board[piece.Owner.RankedLocation(1, 7)]
+		if ok && !rook.Moved && rook.IsOwnedBy(piece.Owner) {
+			possible := true
+			var col int8
+			for col = 6; col > from.Col; col-- {
+				if _, ok := board[piece.Owner.RankedLocation(1, col)]; ok {
+					possible = false
+					break
+				}
+			}
+
+			if possible {
+				result = append(result, from.Relative(0, +2))
+			}
+		}
+	}
+
+	return result
 }
 
 func MovableLocationsFromQueen(board Board, from Location) []Location {
@@ -35,37 +76,115 @@ func MovableLocationsFromQueen(board Board, from Location) []Location {
 		MovableLocationsFromBishop(board, from)...)
 }
 
+func appendUntilMeet(
+	result []Location,
+	owner Player,
+	board Board,
+	loc Location,
+	relRow int8,
+	relCol int8,
+) []Location {
+	newLoc := loc.Relative(relRow, relCol)
+	if !newLoc.IsValid() {
+		return result
+	}
+
+	piece, ok := board[newLoc]
+	if ok {
+		if piece.IsOwnedBy(owner) {
+			return result
+		} else {
+			return append(result, newLoc)
+		}
+	} else {
+		return append(
+			append(result, newLoc),
+			appendUntilMeet(result, owner, board, newLoc, relRow, relCol)...,
+		)
+	}
+}
+
 func MovableLocationsFromRook(board Board, from Location) []Location {
-	// piece := board[from]
-	return []Location{}
+	piece := board[from]
+
+	result := []Location{}
+	result = appendUntilMeet(result, piece.Owner, board, from, -1, 0)
+	result = appendUntilMeet(result, piece.Owner, board, from, +1, 0)
+	result = appendUntilMeet(result, piece.Owner, board, from, 0, -1)
+	result = appendUntilMeet(result, piece.Owner, board, from, 0, +1)
+	return result
 }
 
 func MovableLocationsFromBishop(board Board, from Location) []Location {
-	// piece := board[from]
-	return []Location{}
+	piece := board[from]
+
+	result := []Location{}
+	result = appendUntilMeet(result, piece.Owner, board, from, -1, -1)
+	result = appendUntilMeet(result, piece.Owner, board, from, -1, +1)
+	result = appendUntilMeet(result, piece.Owner, board, from, +1, -1)
+	result = appendUntilMeet(result, piece.Owner, board, from, +1, +1)
+	return result
 }
 
 func MovableLocationsFromKnight(board Board, from Location) []Location {
 	piece := board[from]
 
 	locations := []Location{
-		Location{from.Row + 1, from.Col + 2},
-		Location{from.Row + 1, from.Col - 2},
-		Location{from.Row - 1, from.Col + 2},
-		Location{from.Row - 1, from.Col - 2},
-		Location{from.Row + 2, from.Col + 1},
-		Location{from.Row + 2, from.Col - 1},
-		Location{from.Row - 2, from.Col + 1},
-		Location{from.Row - 2, from.Col - 1},
+		from.Relative(+1, +2),
+		from.Relative(+1, -2),
+		from.Relative(-1, +2),
+		from.Relative(-1, -2),
+		from.Relative(+2, +1),
+		from.Relative(+2, -1),
+		from.Relative(-2, +1),
+		from.Relative(-2, -1),
 	}
 
-	return filter(locations, func(location Location) bool {
-		other, ok := board[location]
-		return !ok || other.IsOwnedBy(piece.Owner)
+	return filter(locations, func(loc Location) bool {
+		if !loc.IsValid() {
+			return false
+		}
+		other, ok := board[loc]
+		return !ok || !other.IsOwnedBy(piece.Owner)
 	})
 }
 
 func MovableLocationsFromPawn(board Board, from Location) []Location {
-	// piece := board[from]
-	return []Location{}
+	piece := board[from]
+
+	result := []Location{}
+
+	// P1 = +1, P2 = -1
+	movableLoc := from.Relative(int8(piece.Owner), 0)
+	if movableLoc.IsValid() {
+		if _, ok := board[movableLoc]; !ok {
+			result = append(result, movableLoc)
+		}
+	}
+	if !piece.Moved {
+		movableLoc = movableLoc.Relative(int8(piece.Owner), 0)
+		if movableLoc.IsValid() {
+			if _, ok := board[movableLoc]; !ok {
+				result = append(result, movableLoc)
+			}
+		}
+	}
+
+	attackableLocs := []Location{
+		movableLoc.Relative(0, -1),
+		movableLoc.Relative(0, +1),
+	}
+
+	result = append(
+		result,
+		filter(attackableLocs, func(loc Location) bool {
+			if !loc.IsValid() {
+				return false
+			}
+			other, ok := board[loc]
+			return ok && !other.IsOwnedBy(piece.Owner)
+		})...,
+	)
+
+	return result
 }

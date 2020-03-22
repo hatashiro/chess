@@ -35,8 +35,12 @@ func (loc Location) IsValid() bool {
 		loc.Col >= 0 && loc.Col < MAX_RANK
 }
 
+func (loc Location) Relative(row int8, col int8) Location {
+	return Location{loc.Row + row, loc.Col + col}
+}
+
 func (loc Location) RelativeTo(other Location) Location {
-	return Location{loc.Row - other.Row, loc.Col - other.Col}
+	return loc.Relative(-other.Row, -other.Col)
 }
 
 func (loc Location) Abs() Location {
@@ -179,7 +183,7 @@ func (state *State) TryMove(from Location, to Location) error {
 
 	piece, ok := board[from]
 
-	if !ok || piece.IsOwnedBy(player) {
+	if !ok || !piece.IsOwnedBy(player) {
 		return errors.New("There is no player's piece in the location.")
 	}
 
@@ -197,13 +201,21 @@ func (state *State) TryMove(from Location, to Location) error {
 	state.move(from, to)
 
 	// Process castling.
-	if piece.Type == KING && to.RelativeTo(from).Abs().Col > 1 {
-		// TODO: castling
+	if piece.Type == KING && to.RelativeTo(from).Abs().Col == 2 {
+    if to.RelativeTo(from).Col > 0 {
+      // Right
+      state.move(piece.Owner.RankedLocation(1, 7), to.Relative(0, -1))
+    } else {
+      // Left
+      state.move(piece.Owner.RankedLocation(1, 0), to.Relative(0, +1))
+    }
 	}
 
 	// Check promotion and flip turn only when there's no pawn waiting for it.
 	if piece.Type == PAWN && to.Row == piece.Owner.RankedRow(MAX_RANK) {
 		state.Promotion = &to
+	} else {
+		state.flipTurn()
 	}
 
 	state.LastUpdated = time.Now().Unix()
@@ -234,8 +246,8 @@ func (state *State) TryPromote(to PieceType) error {
 		return errors.New("It's a wrong piece for promotion.")
 	}
 
-	if to == PAWN {
-		return errors.New("You cannot promote a pawn to a pawn.")
+	if to == PAWN || to == KING {
+		return errors.New("You cannot promote a pawn to that.")
 	}
 
 	state.Board[loc] = Piece{piece.Owner, to, false}
