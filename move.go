@@ -10,11 +10,7 @@ func filter(locations []Location, fn func(Location) bool) []Location {
 	return result
 }
 
-func MovableLocationsFromKing(
-	board Board,
-	from Location,
-	includeCastling bool,
-) []Location {
+func MovableLocationsFromKing(board Board, from Location) []Location {
 	piece := board[from]
 	owner := piece.Owner
 
@@ -38,7 +34,7 @@ func MovableLocationsFromKing(
 	})
 
 	// Castling
-	if includeCastling && !board.IsChecked(owner) && !piece.Moved {
+	if !piece.Moved {
 		// Left
 		rook, ok := board[owner.RankedLocation(1, 0)]
 		if ok && !rook.Moved && rook.IsOwnedBy(owner) {

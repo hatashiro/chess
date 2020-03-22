@@ -114,10 +114,7 @@ func (board Board) Copy() Board {
 	return result
 }
 
-func (board Board) movableLocations(
-	from Location,
-	includeCastling bool,
-) []Location {
+func (board Board) movableLocations(from Location) []Location {
 	var locations []Location
 
 	piece, ok := board[from]
@@ -127,7 +124,7 @@ func (board Board) movableLocations(
 
 	switch piece.Type {
 	case KING:
-		return MovableLocationsFromKing(board, from, includeCastling)
+		return MovableLocationsFromKing(board, from)
 	case QUEEN:
 		return MovableLocationsFromQueen(board, from)
 	case ROOK:
@@ -148,31 +145,6 @@ func (board Board) move(from Location, to Location) {
 	delete(board, from)
 	piece.Moved = true
 	board[to] = piece
-}
-
-func (board Board) IsChecked(player Player) bool {
-	var king Location
-	var opponents []Location
-
-	for loc, piece := range board {
-		if piece.IsOwnedBy(player) {
-			if piece.Type == KING {
-				king = loc
-			}
-		} else {
-			opponents = append(opponents, loc)
-		}
-	}
-
-	for _, from := range opponents {
-		for _, to := range board.movableLocations(from, false) {
-			if to == king {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 func (board Board) Json() interface{} {
@@ -235,7 +207,7 @@ func (state *State) TryMove(from Location, to Location) error {
 	}
 
 	isMovable := false
-	for _, movableLoc := range board.movableLocations(from, true) {
+	for _, movableLoc := range board.movableLocations(from) {
 		if movableLoc == to {
 			isMovable = true
 		}
@@ -247,10 +219,13 @@ func (state *State) TryMove(from Location, to Location) error {
 
 	boardBeforeMove := board.Copy()
 
-	board.move(from, to)
-
-	// Process castling.
 	if piece.Type == KING && to.RelativeTo(from).Abs().Col == 2 {
+		// Castling.
+		if state.IsChecked() {
+			return errors.New("You cannot castle when checked.")
+		}
+
+		board.move(from, to)
 		if to.RelativeTo(from).Col > 0 {
 			// Right
 			board.move(piece.Owner.RankedLocation(1, 7), to.Relative(0, -1))
@@ -258,9 +233,11 @@ func (state *State) TryMove(from Location, to Location) error {
 			// Left
 			board.move(piece.Owner.RankedLocation(1, 0), to.Relative(0, +1))
 		}
+	} else {
+		board.move(from, to)
 	}
 
-	if board.IsChecked(player) {
+	if state.IsChecked() {
 		// Rollback.
 		state.Board = boardBeforeMove
 		return errors.New("It's a wrong move. You'll be checked")
@@ -311,8 +288,37 @@ func (state *State) TryPromote(to PieceType) error {
 	return nil
 }
 
+func (state *State) IsChecked() bool {
+	player := state.Turn
+	board := state.Board
+
+	var king Location
+	var opponents []Location
+
+	for loc, piece := range board {
+		if piece.IsOwnedBy(player) {
+			if piece.Type == KING {
+				king = loc
+			}
+		} else {
+			opponents = append(opponents, loc)
+		}
+	}
+
+	for _, from := range opponents {
+		for _, to := range board.movableLocations(from) {
+			if to == king {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (state *State) IsCheckmated() bool {
-	return true
+	// TODO
+	return false
 }
 
 func (state *State) Json() interface{} {
