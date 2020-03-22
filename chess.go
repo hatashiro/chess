@@ -147,6 +147,11 @@ func (board Board) move(from Location, to Location) {
 	board[to] = piece
 }
 
+func (board Board) isCastling(from Location, to Location) bool {
+	piece := board[from]
+	return piece.Type == KING && to.RelativeTo(from).Abs().Col == 2
+}
+
 func (board Board) Json() interface{} {
 	res := make(map[int8]Piece)
 	for loc, piece := range board {
@@ -219,8 +224,7 @@ func (state *State) TryMove(from Location, to Location) error {
 
 	boardBeforeMove := board.Copy()
 
-	if piece.Type == KING && to.RelativeTo(from).Abs().Col == 2 {
-		// Castling.
+	if board.isCastling(from, to) {
 		if state.IsChecked() {
 			return errors.New("You cannot castle when checked.")
 		}
@@ -317,8 +321,33 @@ func (state *State) IsChecked() bool {
 }
 
 func (state *State) IsCheckmated() bool {
-	// TODO
-	return false
+	if !state.IsChecked() {
+		return false
+	}
+
+	var allies []Location
+	for loc, piece := range state.Board {
+		if piece.IsOwnedBy(state.Turn) {
+			allies = append(allies, loc)
+		}
+	}
+
+	originalBoard := state.Board.Copy()
+	for _, from := range allies {
+		for _, to := range originalBoard.movableLocations(from) {
+			if state.Board.isCastling(from, to) {
+				continue
+			}
+
+			state.Board.move(from, to)
+			checked := state.IsChecked()
+			state.Board = originalBoard.Copy()
+			if !checked {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (state *State) Json() interface{} {
