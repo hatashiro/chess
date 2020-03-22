@@ -6,16 +6,16 @@ export function render(game) {
   renderPlayer(game, enums.chess.Player.P1);
   renderPlayer(game, enums.chess.Player.P2);
 
-  if (game.phase === enums.game.Phase.WAITING) {
-    hide('#board');
-  } else {
+  hide('#board');
+  hide('#promotion');
+  if (game.phase !== enums.game.Phase.WAITING) {
     show('#board');
+
     renderState(game.state);
+
     if (game.state.promotion) {
       show('#promotion');
       renderPromotion(game);
-    } else {
-      hide('#promotion');
     }
   }
 }
