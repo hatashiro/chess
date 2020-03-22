@@ -42,6 +42,7 @@ button {
 #board > div > div {
   flex-grow: 1;
   flex-basis: 0;
+  cursor: pointer;
 }
 
 #board > div:nth-child(even) > div:nth-child(even),
