@@ -10,8 +10,13 @@ func filter(locations []Location, fn func(Location) bool) []Location {
 	return result
 }
 
-func MovableLocationsFromKing(board Board, from Location) []Location {
+func MovableLocationsFromKing(
+	board Board,
+	from Location,
+	includeCastling bool,
+) []Location {
 	piece := board[from]
+	owner := piece.Owner
 
 	result := []Location{
 		from.Relative(-1, -1),
@@ -29,18 +34,18 @@ func MovableLocationsFromKing(board Board, from Location) []Location {
 			return false
 		}
 		other, ok := board[loc]
-		return !ok || !other.IsOwnedBy(piece.Owner)
+		return !ok || !other.IsOwnedBy(owner)
 	})
 
 	// Castling
-	if !piece.Moved {
+	if includeCastling && !board.IsChecked(owner) && !piece.Moved {
 		// Left
-		rook, ok := board[piece.Owner.RankedLocation(1, 0)]
-		if ok && !rook.Moved && rook.IsOwnedBy(piece.Owner) {
+		rook, ok := board[owner.RankedLocation(1, 0)]
+		if ok && !rook.Moved && rook.IsOwnedBy(owner) {
 			possible := true
 			var col int8
 			for col = 1; col < from.Col; col++ {
-				if _, ok := board[piece.Owner.RankedLocation(1, col)]; ok {
+				if _, ok := board[owner.RankedLocation(1, col)]; ok {
 					possible = false
 					break
 				}
@@ -51,12 +56,12 @@ func MovableLocationsFromKing(board Board, from Location) []Location {
 			}
 		}
 		// Right
-		rook, ok = board[piece.Owner.RankedLocation(1, 7)]
-		if ok && !rook.Moved && rook.IsOwnedBy(piece.Owner) {
+		rook, ok = board[owner.RankedLocation(1, 7)]
+		if ok && !rook.Moved && rook.IsOwnedBy(owner) {
 			possible := true
 			var col int8
 			for col = 6; col > from.Col; col-- {
-				if _, ok := board[piece.Owner.RankedLocation(1, col)]; ok {
+				if _, ok := board[owner.RankedLocation(1, col)]; ok {
 					possible = false
 					break
 				}
@@ -97,9 +102,9 @@ func appendUntilMeet(
 			return append(result, newLoc)
 		}
 	} else {
-		return append(
+		return appendUntilMeet(
 			append(result, newLoc),
-			appendUntilMeet(result, owner, board, newLoc, relRow, relCol)...,
+			owner, board, newLoc, relRow, relCol,
 		)
 	}
 }
