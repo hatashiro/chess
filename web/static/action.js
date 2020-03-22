@@ -1,9 +1,9 @@
 import {$} from './query.js';
-import {getGameId} from './game.js';
+import {getGameId, intLocation} from './game.js';
 import {getSessionId} from './session.js';
 import * as enums from './enums.js';
 
-async function sendAction(action, body) {
+async function sendAction(action, body, {showAlert = true} = {}) {
   const res = await fetch(`/game/${getGameId()}/${action}`, {
     method: 'post',
     headers: {'Content-Type': 'application/json'},
@@ -14,8 +14,12 @@ async function sendAction(action, body) {
   });
 
   if (res.status !== 200) {
-    const text = await res.text();
-    alert(`Error: ${text}`);
+    if (showAlert) {
+      const text = await res.text();
+      alert(`Error: ${text}`);
+    } else {
+      throw new Error(await res.text());
+    }
   }
 }
 
@@ -37,3 +41,52 @@ function unregisterPlayer() {
 }
 
 $('#unregister').addEventListener('click', unregisterPlayer);
+
+function getIntLocation($el) {
+  const [, row, col] = $el.id.split('-').map(x => Number(x));
+  return intLocation(row, col);
+}
+
+function selectCell(e) {
+  const $from = $('.from');
+
+  const $cell = e.target;
+  if ($from) {
+    if ($from === $cell) {
+      // Unselect.
+      $cell.classList.remove('from');
+    } else {
+      // Move
+      move(getIntLocation($from), getIntLocation($cell));
+    }
+  } else if ($cell.classList.contains('piece')) {
+    $cell.classList.add('from');
+  }
+}
+
+$('#board').addEventListener('click', selectCell);
+
+async function move(from, to) {
+  try {
+    await sendAction('move', {from, to}, {showAlert: false});
+  } catch (err) {
+    // Ignore move errors and unselect $from.
+    console.error(err);
+    $('.from').classList.remove('from');
+  }
+}
+
+async function promote(e) {
+  if (e.target.tagName !== 'BUTTON') return;
+
+  const to = Number(e.target.id.split('-')[1]);
+
+  try {
+    await sendAction('promote', {to}, {showAlert: false});
+  } catch (err) {
+    // Ignore move errors and unselect $from.
+    console.error(err);
+  }
+}
+
+$('#promotion').addEventListener('click', promote);

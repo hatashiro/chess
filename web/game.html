@@ -12,11 +12,11 @@
 
 <body>
   <div class="content">
-    <p id="info">Turn: <span id="turn"></span></p>
     <p>
       P1:
       <span id="p1-name"></span>
       <button id="p1-register">Register</button>
+      <span id="p1-turn">← Turn</span>
     </p>
     <div id="board">
       <div>
@@ -104,10 +104,22 @@
       P2:
       <span id="p2-name"></span>
       <button id="p2-register">Register</button>
+      <span id="p2-turn">← Turn</span>
     </p>
     <p>
       <button id="unregister">Unregister</button>
     </p>
+    <div id="promotion">
+      <p><span class="name"></span>, please choose a piece type for the promotion.</p>
+      <button class="p1" id="promotion-2">♛</button>
+      <button class="p1" id="promotion-3">♜</button>
+      <button class="p1" id="promotion-4">♝</button>
+      <button class="p1" id="promotion-5">♞</button>
+      <button class="p2" id="promotion-2">♕</button>
+      <button class="p2" id="promotion-3">♖</button>
+      <button class="p2" id="promotion-4">♗</button>
+      <button class="p2" id="promotion-5">♘</button>
+    </div>
   </div>
 
   <script type="module" src="/static/main.js"></script>

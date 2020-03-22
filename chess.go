@@ -222,7 +222,7 @@ func (state *State) TryMove(from Location, to Location) error {
 		state.flipTurn()
 	}
 
-	state.LastUpdated = time.Now().Unix()
+	state.updateTimestamp()
 
 	return nil // No error, succeed.
 }
@@ -236,6 +236,10 @@ func (state *State) move(from Location, to Location) {
 
 func (state *State) flipTurn() {
 	state.Turn = -state.Turn
+}
+
+func (state *State) updateTimestamp() {
+	state.LastUpdated = time.Now().Unix()
 }
 
 func (state *State) TryPromote(to PieceType) error {
@@ -258,6 +262,7 @@ func (state *State) TryPromote(to PieceType) error {
 
 	state.Promotion = nil
 	state.flipTurn()
+	state.updateTimestamp()
 
 	return nil
 }

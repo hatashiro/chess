@@ -7,48 +7,65 @@ export function render(game) {
   renderPlayer(game, enums.chess.Player.P2);
 
   if (game.phase === enums.game.Phase.WAITING) {
-    hide('info');
-    hide('board');
+    hide('#board');
   } else {
-    show('info');
-    show('board');
-    renderInfo(game);
+    show('#board');
     renderState(game.state);
+    if (game.state.promotion) {
+      show('#promotion');
+      renderPromotion(game);
+    } else {
+      hide('#promotion');
+    }
   }
 }
 
-function show(id) {
-  $(`#${id}`).style.display = '';
+function show(selectorOrEl) {
+  if (typeof selectorOrEl === 'string') {
+    $.all(selectorOrEl).forEach(($el) => {
+      $el.style.display = '';
+    });
+  } else {
+    selectorOrEl.style.display = '';
+  }
 }
 
-function hide(id) {
-  $(`#${id}`).style.display = 'none';
+function hide(selectorOrEl) {
+  if (typeof selectorOrEl === 'string') {
+    $.all(selectorOrEl).forEach(($el) => {
+      $el.style.display = 'none';
+    });
+  } else {
+    selectorOrEl.style.display = 'none';
+  }
 }
 
 function renderPlayer(game, player) {
+  const isMyTurn = game.state.turn === player;
   const name = game.players[player];
   const prefix = player === enums.chess.Player.P1 ? 'p1' : 'p2';
-  if (name) {
-    show(`${prefix}-name`);
-    hide(`${prefix}-register`);
-    $(`#${prefix}-name`).textContent = name;
 
+  const $name = $(`#${prefix}-name`);
+  const $turn = $(`#${prefix}-turn`)
+  const $register = $(`#${prefix}-register`)
+  const $unregister = $('#unregister')
+
+  hide($name);
+  hide($turn);
+  hide($register);
+  hide($unregister);
+
+  if (name) {
+    show($name);
+    $name.textContent = name;
     if (game.phase === enums.game.Phase.WAITING) {
-      show('unregister');
-    } else {
-      hide('unregister');
+      show($unregister);
+    } else if (isMyTurn) {
+      show($turn);
     }
   } else {
-    hide(`${prefix}-name`);
-    show(`${prefix}-register`);
-    hide('unregister');
+    show($register);
   }
-}
-
-function renderInfo(game) {
-  const turn = game.state.turn;
-  const name = game.players[turn];
-  $('#turn').textContent = name;
 }
 
 let lastUpdated = 0;
@@ -67,7 +84,14 @@ function renderBoard(board) {
     for (let col = 0; col < MAX_RANK; col++) {
       const $cell = $(`#cell-${row}-${col}`);
       const piece = board[intLocation(row, col)];
-      $cell.textContent = piece ? renderPiece(piece) : '';
+      if (piece) {
+        $cell.textContent = renderPiece(piece);
+        $cell.classList.add('piece');
+      } else {
+        $cell.textContent = '';
+        $cell.classList.remove('piece');
+      }
+      $cell.classList.remove('from');
     }
   }
 }
@@ -93,4 +117,13 @@ const pieceSymbolMap = {
 
 function renderPiece(piece) {
   return pieceSymbolMap[piece.owner][piece.type];
+}
+
+function renderPromotion(game) {
+  const player = game.state.turn;
+  const name = game.players[player];
+  const className = player === enums.chess.Player.P1 ? "p1" : "p2"
+  hide('#promotion > button');
+  show(`#promotion > button.${className}`);
+  $('#promotion .name').textContent = name;
 }

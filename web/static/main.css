@@ -42,7 +42,21 @@ button {
 #board > div > div {
   flex-grow: 1;
   flex-basis: 0;
+  cursor: default;
+}
+
+#board > div > div.piece {
   cursor: pointer;
+}
+
+#board > div > div.from {
+  animation: from .5s infinite alternate;
+  text-shadow: 2px 2px 3px #444;
+}
+
+@keyframes from {
+  from { color: black; }
+  to { color: #c12b2b; }
 }
 
 #board > div:nth-child(even) > div:nth-child(even),
@@ -55,7 +69,22 @@ button {
   background-color: #bd763a;
 }
 
-#info {
-  font-size: 20px;
-  color: #777;
+#p1-turn,
+#p2-turn {
+  color: #c12b2b;
+}
+
+#promotion {
+  position: fixed;
+  top: 50px;
+  left: 5%;
+  box-sizing: border-box;
+  width: 90%;
+  background-color: rgba(100%, 100%, 100%, 0.9);
+  border: 2px soliD #999;
+  padding: 10px;
+}
+
+#promotion p {
+  margin-top: 0;
 }
