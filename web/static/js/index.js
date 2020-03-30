@@ -1,6 +1,6 @@
 import {html, render} from 'https://unpkg.com/lit-html@1.2.1/lit-html.js?module';
 
-const index = () => html`
+const app = () => html`
   <div class="content">
     <h1>♞♘ CHESS</h1>
     <p>
@@ -29,4 +29,4 @@ function join() {
   location.href = `/${gameId}`
 }
 
-render(index(), document.body);
+render(app(), document.body);
