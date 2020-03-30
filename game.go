@@ -135,6 +135,10 @@ func (game *Game) Promote(session uint64, to PieceType) error {
 		return err
 	}
 
+	if game.State.IsCheckmated() {
+		game.Phase = DONE
+	}
+
 	return nil
 }
 
