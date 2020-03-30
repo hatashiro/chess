@@ -1,35 +1,9 @@
 <!DOCTYPE html>
-<html>
+<title>Chess</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<head>
-  <title>Chess</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
+<link rel="stylesheet" href="/static/css/main.css">
 
-  <link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
-  <link rel="stylesheet" href="/static/main.css">
-</head>
-
-<body>
-  <div class="content">
-    <h1>♞♘ CHESS</h1>
-    <p>
-      <input id="gameIdInput" type="text" placeholder="Room name...">
-    </p>
-    <p>
-      <button onclick="join()">Join</button>
-    </p>
-  </div>
-  <script>
-    const gameIdInput = document.querySelector("#gameIdInput");
-    function join() {
-      const gameId = gameIdInput.value.trim();
-      if (!gameId) {
-        alert("Enter a game ID.");
-      }
-      location.href = `/${gameId}`
-    }
-  </script>
-</body>
-
-</html>
+<script type="module" src="/static/js/index.js"></script>
