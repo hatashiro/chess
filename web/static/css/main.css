@@ -70,10 +70,7 @@ button {
   background-color: #bd763a;
 }
 
-#p1-turn,
-#p2-turn,
-#p1-win,
-#p2-win {
+.indicator {
   color: #c12b2b;
 }
 
