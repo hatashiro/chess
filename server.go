@@ -3,21 +3,27 @@ package chess
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
-	echo "github.com/labstack/echo"
+	"github.com/labstack/echo"
 )
 
 var games map[string]*Game = make(map[string]*Game)
+
+func asset(path string) string {
+	gopath := os.Getenv("GOPATH")
+	return filepath.Join(gopath, "src/github.com/utatti/chess", path)
+}
 
 func NewServer() *echo.Echo {
 	e := echo.New()
 
 	e.Debug = len(os.Getenv("DEBUG")) > 0
 
-	e.Static("/static", "web/static")
+	e.Static("/static", asset("web/static"))
 
-	e.File("/", "web/index.html")
-	e.File("/:id", "web/game.html")
+	e.File("/", asset("web/index.html"))
+	e.File("/:id", asset("web/game.html"))
 
 	e.GET("/game/:id", getGame)
 
